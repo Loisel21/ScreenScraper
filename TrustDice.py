@@ -189,7 +189,13 @@ def process_message(message):
         game_values = get_game_values(current_game, message)
         if game_values:
             current_no, current_instruction, current_stage, current_state = game_values
+            #print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}, Game: {current_game}")
             print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}, Game: {current_game}")
+            
+            # → Logging hinzufügen
+            log_entry = f"{datetime.now().isoformat()} | Spiel: {current_game}, Minute: {current_minute}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}\n"
+            with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                logfile.write(log_entry)
 
 
     # for keyword in prefix_words:

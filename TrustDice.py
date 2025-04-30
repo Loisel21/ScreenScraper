@@ -17,6 +17,8 @@ min_1 = ['1min', '1 min', '1minute', '1 minutes']
 min_3 = ['3min', '3 min', '3minutes', '3 minutes']
 min_5 = ['5min', '5 min', '5minutes', '5 minutes']
 
+
+
 game_disc = ['disc', 'discs']
 game_block = ['block', 'blocks']
 game_redgreen = ['red green', 'red_green', 'redgreen']
@@ -26,6 +28,7 @@ current_state = None
 current_no = None
 current_stage = None
 current_instruction = None
+current_minute = None
 
 game_red = ['red']
 game_green = ['green', 'gn', 'grn', 'gm', 'gr']
@@ -35,6 +38,8 @@ game_state_even = ['even', 'evn']
 losing_states = ['lose', 'loss', 'los', 'lost']
 winning_states = ['win', 'winn', 'winner', 'won', 'wn']
 
+
+
 def build_pattern(words):
     return '|'.join(re.escape(word) for word in words)
 
@@ -42,6 +47,15 @@ def build_pattern(words):
 state_pattern_odd_even = build_pattern(game_state_odd + game_state_even)
 state_pattern_red_green = build_pattern(game_red + game_green)
 result_pattern = build_pattern(losing_states + winning_states)
+
+# Einzelmuster
+min_1_pattern = build_pattern(min_1)
+min_3_pattern = build_pattern(min_3)
+min_5_pattern = build_pattern(min_5)
+
+# Kombinierter Pattern
+combined_pattern = rf'\b({min_1_pattern}|{min_3_pattern}|{min_5_pattern})\b'
+compiled_regex = re.compile(combined_pattern, re.IGNORECASE)
 
 # Zwei separate Regexe (case-insensitive)
 regex_odd_even = re.compile(
@@ -60,6 +74,7 @@ allowed_times = [
     ((13, 0), (13, 59)),  # von 13:00 bis 13:59
     ((18, 0), (18, 59)),  # von 18:00 bis 18:59
     ((20, 0), (20, 59)),  # von 20:00 bis 20:59
+    ((23, 0), (23, 59)),  # von 20:00 bis 20:59
 ]
 
 
@@ -107,13 +122,32 @@ def is_within_allowed_time():
             return True
     return False
 
-
-def get_game(message):
-    for game in games:
-        if game.lower() in message.lower():
-            return game
-        
+# Funktion zur Analyse
+def extract_minutes(text):
+    match = compiled_regex.search(text)
+    if not match:
+        return None  # keine Zeitangabe gefunden
+    value = match.group(1).lower()
+    if value in map(str.lower, min_1):
+        return 1
+    elif value in map(str.lower, min_3):
+        return 3
+    elif value in map(str.lower, min_5):
+        return 5
     return None
+
+def detect_current_game(message):
+
+    if re.search(rf'\b({build_pattern(game_disc)})\b', message):
+        return 'disc'
+
+    if re.search(rf'\b({build_pattern(game_block)})\b', message):
+        return 'block'
+
+    if re.search(rf'({build_pattern(game_redgreen)})', message):
+        return 'redgreen'
+
+    return None  # nichts gefunden
 
 def get_game_values(current_game, message):
     if current_game in game_disc:
@@ -142,10 +176,14 @@ def get_game_values(current_game, message):
 def process_message(message):
     message = message.lower()
 
+    if current_minute is None:
+        current_minute = extract_minutes(message)
+
     if current_game is None:
-        current_game = get_game(message)
+        current_game = detect_current_game(message)
 
     if current_game != None:
+        game_values = None
         game_values = get_game_values(current_game, message)
         if game_values:
             current_no, current_instruction, current_stage, current_state = game_values
@@ -171,5 +209,6 @@ if __name__ == "__main__":
             current_no = None
             current_stage = None
             current_instruction = None
+            current_minute = None
 
         time.sleep(interval)

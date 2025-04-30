@@ -74,7 +74,6 @@ allowed_times = [
     ((13, 0), (13, 59)),  # von 13:00 bis 13:59
     ((18, 0), (18, 59)),  # von 18:00 bis 18:59
     ((20, 0), (20, 59)),  # von 20:00 bis 20:59
-    ((23, 0), (23, 59)),  # von 20:00 bis 20:59
 ]
 
 
@@ -150,6 +149,8 @@ def detect_current_game(message):
     return None  # nichts gefunden
 
 def get_game_values(current_game, message):
+    global current_no, current_instruction, current_stage, current_state
+
     if current_game in game_disc:
         pattern = regex_odd_even
     elif current_game in game_block:
@@ -174,6 +175,7 @@ def get_game_values(current_game, message):
 
 
 def process_message(message):
+    global current_minute, current_game, current_no, current_instruction, current_stage, current_state
     message = message.lower()
 
     if current_minute is None:

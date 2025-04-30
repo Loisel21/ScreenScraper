@@ -163,11 +163,11 @@ def get_game_values(current_game, message):
     matches = re.findall(pattern, message)
     if matches:
         last_match = matches[-1]
-        if current_no != last_match[1]:
-            current_no = last_match[1]
-            current_instruction = last_match[2]
-            current_stage = last_match[3]
-            current_state = last_match[4]
+        if current_no != last_match[0]:
+            current_no = last_match[0]
+            current_instruction = last_match[1]
+            current_stage = last_match[2]
+            current_state = last_match[3]
             return current_no, current_instruction, current_stage, current_state
         else:
             return None, None, None, None

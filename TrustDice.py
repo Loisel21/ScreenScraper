@@ -12,11 +12,14 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 # Screenshot-Region (angepasst!)
 region = (400, 80, 500, 900) # Region anpassen!
 interval = 1  # Zeitintervall in Sekunden
-prefix_words = ['3min', '3 min', '3minutes', '3 minutes', '1min', '1 min', '1minute', '1 minutes']
+
+min_1 = ['1min', '1 min', '1minute', '1 minutes']
+min_3 = ['3min', '3 min', '3minutes', '3 minutes']
+min_5 = ['5min', '5 min', '5minutes', '5 minutes']
 
 game_disc = ['disc', 'discs']
 game_block = ['block', 'blocks']
-game_redgreen = ['red green', 'red_green']
+game_redgreen = ['red green', 'red_green', 'redgreen']
 
 current_game = None
 current_state = None
@@ -29,12 +32,27 @@ game_green = ['green', 'gn', 'grn', 'gm', 'gr']
 game_state_odd = ['odd', '0dd']
 game_state_even = ['even', 'evn']
 
-losing_states = ['lose', 'loss']
-winning_states = ['win', 'winn', 'winner', 'won']
+losing_states = ['lose', 'loss', 'los', 'lost']
+winning_states = ['win', 'winn', 'winner', 'won', 'wn']
 
-blocks_pattern = r"\b(\d{2,3})\s+(odd|even|0dd)\s+(?:stage\s*)?(\d+)(?:\s+(win|won|loss|lose|los))?\b"
-redgreen_pattern = r"\b(\d{2,3})\s+(red|green)\s+(?:stage\s*)?(\d+)(?:\s+(win|won|loss|lose|los))?\b"
-discs_pattern = r"\b(\d{2,3})\s+(odd|even|0dd)\s+(?:stage\s*)?(\d+)(?:\s+(win|won|loss|lose|los))?\b"
+def build_pattern(words):
+    return '|'.join(re.escape(word) for word in words)
+
+# Gruppen zusammenfassen
+state_pattern_odd_even = build_pattern(game_state_odd + game_state_even)
+state_pattern_red_green = build_pattern(game_red + game_green)
+result_pattern = build_pattern(losing_states + winning_states)
+
+# Zwei separate Regexe (case-insensitive)
+regex_odd_even = re.compile(
+    rf'\b(\d{{2,3}})\s+({state_pattern_odd_even})\s+(?:stage\s*)?(\d+)(?:\s+({result_pattern}))?\b',
+    re.IGNORECASE
+)
+
+regex_red_green = re.compile(
+    rf'\b(\d{{2,3}})\s+({state_pattern_red_green})\s+(?:stage\s*)?(\d+)(?:\s+({result_pattern}))?\b',
+    re.IGNORECASE
+)
 
 
 allowed_times = [
@@ -43,6 +61,7 @@ allowed_times = [
     ((18, 0), (18, 59)),  # von 18:00 bis 18:59
     ((20, 0), (20, 59)),  # von 20:00 bis 20:59
 ]
+
 
 def get_chat_screenshot(region=None):
     pyautogui.click(1850, 900)
@@ -98,11 +117,11 @@ def get_game(message):
 
 def get_game_values(current_game, message):
     if current_game in game_disc:
-        pattern = discs_pattern
+        pattern = regex_odd_even
     elif current_game in game_block:
-        pattern = blocks_pattern
+        pattern = regex_odd_even
     elif current_game in game_redgreen:
-        pattern = redgreen_pattern
+        pattern = regex_red_green
     else:
         print("Unbekanntes Spiel")
         return None, None, None, None
@@ -110,11 +129,11 @@ def get_game_values(current_game, message):
     matches = re.findall(pattern, message)
     if matches:
         last_match = matches[-1]
-        if current_no != last_match[0]:
-            current_no = last_match[0]
-            current_instruction = last_match[1]
-            current_stage = last_match[2]
-            current_state = last_match[3]
+        if current_no != last_match[1]:
+            current_no = last_match[1]
+            current_instruction = last_match[2]
+            current_stage = last_match[3]
+            current_state = last_match[4]
             return current_no, current_instruction, current_stage, current_state
         else:
             return None, None, None, None

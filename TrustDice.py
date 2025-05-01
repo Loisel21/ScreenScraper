@@ -5,6 +5,8 @@ import time
 import os
 from datetime import datetime
 import re
+import Test.DingTalkWindow as DingTalkWindow
+last_no = None
 
 # Optional: Pfad zu tesseract.exe setzen, falls Windows
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
@@ -78,6 +80,7 @@ allowed_times = [
 
 
 def get_chat_screenshot(region=None):
+    pyautogui.failsafe = False
     pyautogui.click(1850, 900)
     pyautogui.sleep(0.5)
     screenshot = pyautogui.screenshot(region=region)  # z.B. nur das Chat-Fenster
@@ -105,10 +108,6 @@ def monitor_dingtalk(region=None):
         #         run_my_script()
         
         
-
-def run_my_script():
-    # Hier kannst du dein eigenes Python-Skript aufrufen oder Aktionen starten
-    os.system("python mein_script.py")
 
 def is_within_allowed_time():
     now = datetime.now()
@@ -164,18 +163,20 @@ def get_game_values(current_game, message):
     matches = re.findall(pattern, message)
     if matches:
         last_match = matches[-1]
-        if current_no != last_match[0]:
-            current_no = last_match[0]
-            current_instruction = last_match[1]
-            current_stage = last_match[2]
-            current_state = last_match[3]
-            return current_no, current_instruction, current_stage, current_state
-        else:
-            return None, None, None, None
+        current_no = last_match[0]
+        current_instruction = last_match[1]
+        current_stage = last_match[2]
+        current_state = last_match[3]
+        return current_no, current_instruction, current_stage, current_state
+    else:
+        return current_no, current_instruction, current_stage, current_state
 
 
 def process_message(message):
     global current_minute, current_game, current_no, current_instruction, current_stage, current_state
+    global last_no
+
+
     message = message.lower()
 
     if current_minute is None:
@@ -189,19 +190,20 @@ def process_message(message):
         game_values = get_game_values(current_game, message)
         if game_values:
             current_no, current_instruction, current_stage, current_state = game_values
-            #print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}, Game: {current_game}")
-            print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}, Game: {current_game}")
-            
-            # → Logging hinzufügen
-            log_entry = f"{datetime.now().isoformat()} | Spiel: {current_game}, Minute: {current_minute}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}\n"
-            with open("game_log.txt", "a", encoding="utf-8") as logfile:
-                logfile.write(log_entry)
+            if last_no != current_no:
+                last_no = current_no
+                print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}, Game: {current_game}")
+                
+                # → Logging hinzufügen
+                log_entry = f"{datetime.now().isoformat()} | Spiel: {current_game}, Minute: {current_minute}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}\n"
+                with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                    logfile.write(log_entry)
 
+                if current_state == None:
+                    print("State ist None")
 
-    # for keyword in prefix_words:
-    #     if keyword.lower() in message.lower():
-    #         print(f"🎯 Schlüsselwort erkannt: {keyword} → Skript wird getriggert!")
-
+                #LNO → Hier kannst du den Code hinzufügen, der ausgeführt werden soll, wenn eine Nachricht erkannt wird
+                #run Selenium script
     
 
 if __name__ == "__main__":
@@ -209,8 +211,11 @@ if __name__ == "__main__":
 
     while True:
         if is_within_allowed_time():
-            message = monitor_dingtalk(region = region)
-            process_message(message)
+        #if True:
+            if DingTalkWindow.dingtalk_window():
+                time.sleep(0.5)
+                message = monitor_dingtalk(region = region)
+                process_message(message)
         else:
             current_game = None
             current_state = None
@@ -218,5 +223,6 @@ if __name__ == "__main__":
             current_stage = None
             current_instruction = None
             current_minute = None
+            last_no = None
 
         time.sleep(interval)

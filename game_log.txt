@@ -1,28 +1,5 @@
-2025-05-01T14:07:04.296623 | Spiel: redgreen, Minute: None, No: 21, Instruction: red, Stage: 1, State: 
-2025-05-01T14:07:06.586611 | Spiel: redgreen, Minute: 3, No: None, Instruction: None, Stage: None, State: None
-2025-05-01T14:07:08.926956 | Spiel: redgreen, Minute: 3, No: 21, Instruction: red, Stage: 1, State: 
-2025-05-01T14:07:11.249479 | Spiel: redgreen, Minute: 3, No: None, Instruction: None, Stage: None, State: None
-2025-05-01T14:07:13.711397 | Spiel: redgreen, Minute: 3, No: 21, Instruction: red, Stage: 1, State: 
-2025-05-01T14:07:16.001212 | Spiel: redgreen, Minute: 3, No: None, Instruction: None, Stage: None, State: None
-2025-05-01T14:07:18.303379 | Spiel: redgreen, Minute: 3, No: 21, Instruction: red, Stage: 1, State: 
-2025-05-01T14:07:20.598780 | Spiel: redgreen, Minute: 3, No: None, Instruction: None, Stage: None, State: None
-2025-05-01T14:07:22.978478 | Spiel: redgreen, Minute: 3, No: 21, Instruction: red, Stage: 1, State: 
-2025-05-01T14:07:25.291313 | Spiel: redgreen, Minute: 3, No: None, Instruction: None, Stage: None, State: None
-2025-05-01T14:10:45.290436 | Spiel: redgreen, Minute: 3, No: 21, Instruction: red, Stage: 1, State: 
-2025-05-01T19:11:16.876329 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:19.924632 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:22.813356 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:26.733144 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:29.777844 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:32.874742 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:36.114535 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:39.214075 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:42.298842 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:45.511639 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:11:48.499534 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:14:11.697038 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T19:15:55.865070 | Spiel: disc, Minute: 3, No: 321, Instruction: even, Stage: 1, State: 
-2025-05-01T20:00:31.017946 | Spiel: redgreen, Minute: 3, No: 361, Instruction: red, Stage: 1, State: 
-2025-05-01T20:03:26.742197 | Spiel: redgreen, Minute: 3, No: 362, Instruction: red, Stage: 2, State: 
-2025-05-01T20:05:45.927316 | Spiel: redgreen, Minute: 3, No: 05, Instruction: red, Stage: 195, State: 
-2025-05-01T20:06:33.527426 | Spiel: redgreen, Minute: 3, No: 363, Instruction: red, Stage: 1, State: 
+2025-05-01T21:05:34.999388 | Spiel: redgreen, Minute: 3, No: 361, Instruction: red, Stage: 1, State: 
+2025-05-01T21:05:57.897907 | Spiel: redgreen, Minute: 3, No: 362, Instruction: red, Stage: 2, State: 
+2025-05-01T21:06:12.764620 | Spiel: redgreen, Minute: 3, No: 363, Instruction: red, Stage: 1, State: 
+2025-05-01T21:06:49.949846 | Spiel: redgreen, Minute: 3, No: 364, Instruction: red, Stage: 1, State: 
+2025-05-01T21:07:05.956443 | Spiel: redgreen, Minute: 3, No: 365, Instruction: green, Stage: 1, State: 

@@ -114,8 +114,8 @@ def extract_minutes(text):
     return None
 
 def detect_current_game(message):
-    if re.search(rf'\b({build_pattern(game_disc)})\b', message): return 'disc'
-    if re.search(rf'\b({build_pattern(game_block)})\b', message): return 'block'
+    if re.search(rf'({build_pattern(game_disc)})', message): return 'disc'
+    if re.search(rf'({build_pattern(game_block)})', message): return 'block'
     if re.search(rf'({build_pattern(game_redgreen)})', message): return 'redgreen'
     return None
 
@@ -151,4 +151,4 @@ if __name__ == "__main__":
             process_message(message)
         else:
             current_game = current_state = current_no = current_stage = current_instruction = current_minute = last_no = None
-        time.sleep(interval)
+        #time.sleep(interval)

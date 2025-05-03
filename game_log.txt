@@ -1,5 +1,0 @@
-2025-05-01T21:05:34.999388 | Spiel: redgreen, Minute: 3, No: 361, Instruction: red, Stage: 1, State: 
-2025-05-01T21:05:57.897907 | Spiel: redgreen, Minute: 3, No: 362, Instruction: red, Stage: 2, State: 
-2025-05-01T21:06:12.764620 | Spiel: redgreen, Minute: 3, No: 363, Instruction: red, Stage: 1, State: 
-2025-05-01T21:06:49.949846 | Spiel: redgreen, Minute: 3, No: 364, Instruction: red, Stage: 1, State: 
-2025-05-01T21:07:05.956443 | Spiel: redgreen, Minute: 3, No: 365, Instruction: green, Stage: 1, State: 

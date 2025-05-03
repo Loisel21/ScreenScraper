@@ -43,8 +43,12 @@ def main():
         element = driver.find_element(By.CSS_SELECTOR, ".RG:nth-child(5) > .\\__cover") #3 minute red green
         driver.execute_script("arguments[0].scrollIntoView();", element)
         driver.find_element(By.CSS_SELECTOR, ".RG:nth-child(5) > .\\__cover").click() #3 minute red green
-        
+
         time.sleep(3)
+
+        balance_element = driver.find_element(By.CSS_SELECTOR, ".balance").text
+        balance_number = float(balance_element.split()[0])
+        
 
         driver.execute_script("window.scrollTo(0,0)")
         time.sleep(3)

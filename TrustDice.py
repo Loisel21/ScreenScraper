@@ -7,19 +7,21 @@ import os
 from datetime import datetime
 import re
 
+use_Testmode = False
 last_no = None
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 region = (400, 80, 500, 900)
 interval = 1
+bet_steps = [0.1, 0.3, 0.9, 2.7, 8.1, 24.3, 72.9, 218.7]
 
 min_1 = ['1min', '1 min', '1minute', '1 minutes']
 min_3 = ['3min', '3 min', '3minutes', '3 minutes']
 min_5 = ['5min', '5 min', '5minutes', '5 minutes']
 
-game_disc = ['disc', 'discs']
-game_block = ['block', 'blocks']
+game_discs = ['disc', 'discs']
+game_blocks = ['block', 'blocks']
 game_redgreen = ['red green', 'red_green', 'redgreen']
 
 game_red = ['red']
@@ -104,29 +106,50 @@ def is_within_allowed_time():
     return False
 
 def extract_minutes(text):
-    match = compiled_regex.search(text)
-    if not match:
-        return None
-    value = match.group(1).lower()
-    if value in map(str.lower, min_1): return 1
-    elif value in map(str.lower, min_3): return 3
-    elif value in map(str.lower, min_5): return 5
+    for minute in min_1:
+        if minute in text:
+            return 1
+    for minute in min_3:
+        if minute in text:
+            return 3
+    for minute in min_5:
+        if minute in text:
+            return 5
     return None
 
 def detect_current_game(message):
-    if re.search(rf'({build_pattern(game_disc)})', message): return 'disc'
-    if re.search(rf'({build_pattern(game_block)})', message): return 'block'
+    if re.search(rf'({build_pattern(game_discs)})', message): return 'discs'
+    if re.search(rf'({build_pattern(game_blocks)})', message): return 'blocks'
     if re.search(rf'({build_pattern(game_redgreen)})', message): return 'redgreen'
     return None
 
 def get_game_values(current_game, message):
     global current_no, current_instruction, current_stage, current_state
-    pattern = regex_odd_even if current_game in game_disc + game_block else regex_red_green
+    pattern = regex_odd_even if current_game in game_discs + game_blocks else regex_red_green
     matches = re.findall(pattern, message)
     if matches:
         last_match = matches[-1]
         current_no, current_instruction, current_stage, current_state = last_match
+        current_instruction = normalize_instruction(current_instruction)
     return current_no, current_instruction, current_stage, current_state
+
+
+def normalize_instruction(text):
+    # Reihenfolge beachten: zuerst green prüfen, da sie mehrere Synonyme hat
+    for word in game_green:
+        if word in text:
+            return 'green'
+    for word in game_red:
+        if word in text:
+            return 'red'
+    for word in game_state_odd:
+        if word in text:
+            return 'odd'
+    for word in game_state_even:
+        if word in text:
+            return 'even'
+
+    return None  # wenn nichts gefunden wurde
 
 def process_message(message):
     global current_minute, current_game, current_no, current_instruction, current_stage, current_state, last_no
@@ -138,17 +161,44 @@ def process_message(message):
     if current_game:
         values = get_game_values(current_game, message)
         if values and last_no != current_no:
-            last_no = current_no
-            print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}")
-            with open("game_log.txt", "a", encoding="utf-8") as logfile:
-                logfile.write(f"{datetime.now().isoformat()} | Spiel: {current_game}, Minute: {current_minute}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}\n")
+            if current_state == '':
+                last_no = current_no
+                print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}")
+                with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                    logfile.write(f"{datetime.now().isoformat()} | Spiel: {current_game}, Minute: {current_minute}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}\n")
+                return True
+    return False
+
+                
 
 if __name__ == "__main__":
     print("Monitoring gestartet...")
     while True:
-        if is_within_allowed_time():
+        if is_within_allowed_time() or use_Testmode:
+            start_time = datetime.now()
+
             message = monitor_dingtalk(region=region)
-            process_message(message)
+            processed = process_message(message)
+
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+
+            with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                logfile.write(f"{end_time.isoformat()} | Verarbeitung dauerte {duration:.2f} Sekunden.\n")
+
+            if processed:
+                last_processed_time = datetime.now()
+            else:
+                if last_processed_time:
+                    elapsed = (datetime.now() - last_processed_time).total_seconds()
+                    if elapsed > 240:
+                        print(f"Achtung: Seit über 4 Minuten ({int(elapsed)}s) keine Verarbeitung erfolgt.")
+                        with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                            logfile.write(f"{datetime.now().isoformat()} | Achtung: Seit über 4 Minuten ({int(elapsed)}s) keine Verarbeitung erfolgt.\n")
+                else:
+                    print("Noch keine Verarbeitung erfolgt.")
+                    with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                        logfile.write(f"{datetime.now().isoformat()} | Noch keine Verarbeitung erfolgt.\n")
         else:
             current_game = current_state = current_no = current_stage = current_instruction = current_minute = last_no = None
-        #time.sleep(interval)
+            last_processed_time = None

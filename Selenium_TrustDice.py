@@ -7,7 +7,7 @@ from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from a_selenium_click_on_coords import click_on_coordinates
 
 
-def main():
+def execute_bet(game, minute, instruction, last_balance, bet_steps):
     # Mobiler iPhone-User-Agent
     mobile_user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1"
 
@@ -40,27 +40,48 @@ def main():
         driver.find_element(By.CSS_SELECTOR, "p > .svg-icon").click()
         time.sleep(1)
 
-        element = driver.find_element(By.CSS_SELECTOR, ".RG:nth-child(5) > .\\__cover") #3 minute red green
+
+
+        game_element, instruction_button = get_game_elements(game, minute, instruction)
+
+        if game_element is None:
+            print("Invalid game or minute specified.")
+            return
+
+        element = driver.find_element(By.CSS_SELECTOR, game_element)
         driver.execute_script("arguments[0].scrollIntoView();", element)
-        driver.find_element(By.CSS_SELECTOR, ".RG:nth-child(5) > .\\__cover").click() #3 minute red green
+        driver.find_element(By.CSS_SELECTOR, game_element).click()
 
         time.sleep(3)
 
         balance_element = driver.find_element(By.CSS_SELECTOR, ".balance").text
-        balance_number = float(balance_element.split()[0])
+        current_balance = float(balance_element.split()[0])
+
+        if last_balance == 0.0:
+            last_balance = current_balance
+        elif current_balance > last_balance:
+            bet_index = 0
+        elif current_balance < last_balance:
+            bet_index = min(bet_index + 1, len(bet_steps) - 1)
+
         
 
+        
         driver.execute_script("window.scrollTo(0,0)")
         time.sleep(3)
 
+        driver.find_element(By.CSS_SELECTOR, instruction_button).click()
+
         driver.find_element(By.CSS_SELECTOR, ".input").click()
-        driver.find_element(By.CSS_SELECTOR, ".input").send_keys("0.1")
-        driver.find_element(By.CSS_SELECTOR, ".betDiv:nth-child(1) > .label").click()
+
+        #LNO Calculate Bet Steps
+        driver.find_element(By.CSS_SELECTOR, ".input").send_keys(bet_steps[bet_index])
+
         driver.find_element(By.CSS_SELECTOR, ".betBtn").click()
         driver.find_element(By.CSS_SELECTOR, ".btn-submit").click()
             
         #Cancel bet
-        time.sleep(3)
+        time.sleep(5)
         driver.find_element(By.CSS_SELECTOR, ".dot").click()
         driver.find_element(By.CSS_SELECTOR, ".itemBox > .item:nth-child(2)").click()
         time.sleep(3)
@@ -72,5 +93,32 @@ def main():
     finally:
         driver.quit()
 
+def get_game_elements(game, minute, instruction):
+    if game == "redgreen":
+        match minute:
+            case 3:
+                game_element = ".RG:nth-child(5) > .\\__cover"
+                match instruction:
+                    case "red": instruction_button = ".betDiv:nth-child(1)"
+                    case "green": instruction_button = ".betDiv:nth-child(3)"
+            
+    if game == "blocks":
+        match minute:
+            case 3:
+                game_element = ".BLK:nth-child(4) > .\\__cover"
+                match instruction:
+                    case "odd": instruction_button = ".betDiv:nth-child(3)"
+                    case "even": instruction_button = ".betDiv:nth-child(4)"
+            
+    if game == "discs":
+        match minute:
+            case 3:
+                game_element = ".DS:nth-child(6) > .\\__cover"
+                match instruction:
+                    case "odd": instruction_button = ".betDiv:nth-child(2)"
+                    case "even": instruction_button = ".betDiv:nth-child(5)"
+
+    return game_element, instruction_button
+
 if __name__ == "__main__":
-    main()
+    execute_bet(game = "redgreen", minute = 3, instruction = "green", last_balance = 0.0, bet_steps = [0.1, 0.3, 0.9, 2.7, 8.1, 24.3, 72.9, 218.7])

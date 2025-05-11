@@ -8,9 +8,38 @@ from datetime import datetime
 import re
 
 use_Testmode = False
+deactivate_click = False
+
 last_no = None
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+allowed_times = [
+    ((11, 0), (11, 59)),
+    ((13, 0), (13, 59)),
+    ((18, 0), (18, 59)),
+    ((20, 0), (20, 59)),
+]
+
+def is_within_allowed_time():
+    now = datetime.now()
+    for start, end in allowed_times:
+        if (now.hour > start[0] or (now.hour == start[0] and now.minute >= start[1])) and \
+           (now.hour < end[0] or (now.hour == end[0] and now.minute <= end[1])):
+            return True
+    return False
+
+def laufzeit_messen(func):
+    def wrapper(*args, **kwargs):
+        if is_within_allowed_time() or use_Testmode:
+            start = time.time()
+            result = func(*args, **kwargs)
+            ende = time.time()
+            #print(f"[{func.__name__}] Laufzeit: {ende - start:.4f} Sekunden")
+            with open("game_log.txt", "a", encoding="utf-8") as logfile:
+                logfile.write(f"[{func.__name__}] Laufzeit: {ende - start:.4f} Sekunden\n")
+            return result
+    return wrapper
 
 region = (400, 80, 500, 900)
 interval = 1
@@ -39,6 +68,7 @@ current_stage = None
 current_instruction = None
 current_minute = None
 
+#@laufzeit_messen
 def build_pattern(words):
     return '|'.join(re.escape(word) for word in words)
 
@@ -63,20 +93,22 @@ regex_red_green = re.compile(
     re.IGNORECASE
 )
 
-allowed_times = [
-    ((11, 0), (11, 59)),
-    ((13, 0), (13, 59)),
-    ((18, 0), (18, 59)),
-    ((20, 0), (20, 59)),
-]
 
+
+#@laufzeit_messen
 def get_chat_screenshot(region=None):
     try:
-        app = Application(backend="uia").connect(title_re=".*DingTalk.*")
+        if not hasattr(get_chat_screenshot, "cached_app"):
+            get_chat_screenshot.cached_app = Application(backend="uia").connect(title_re=".*DingTalk.*")
+        app = get_chat_screenshot.cached_app
         window = app.window(title_re=".*DingTalk.*")
+
         window.set_focus()
-        window.click_input(coords=(1850, 900))  # Simulierter Klick innerhalb des Fensters
-        time.sleep(0.5)
+
+        if use_Testmode == False and deactivate_click == False:
+            window.click_input(coords=(1850, 900))  # Simulierter Klick innerhalb des Fensters
+
+        time.sleep(1)
         rect = window.rectangle()
         left, top = rect.left + region[0], rect.top + region[1]
         right, bottom = left + region[2], top + region[3]
@@ -86,6 +118,7 @@ def get_chat_screenshot(region=None):
         print(f"Screenshot-Fehler: {e}")
         return None
 
+#@laufzeit_messen
 def extract_text(image):
     config = r'--oem 3 --psm 6'
     text = pytesseract.image_to_string(image, lang='eng', config=config)
@@ -97,14 +130,9 @@ def monitor_dingtalk(region=None):
         return extract_text(screenshot)
     return ""
 
-def is_within_allowed_time():
-    now = datetime.now()
-    for start, end in allowed_times:
-        if (now.hour > start[0] or (now.hour == start[0] and now.minute >= start[1])) and \
-           (now.hour < end[0] or (now.hour == end[0] and now.minute <= end[1])):
-            return True
-    return False
 
+
+#@laufzeit_messen
 def extract_minutes(text):
     for minute in min_1:
         if minute in text:
@@ -117,12 +145,14 @@ def extract_minutes(text):
             return 5
     return None
 
+#@laufzeit_messen
 def detect_current_game(message):
     if re.search(rf'({build_pattern(game_discs)})', message): return 'discs'
     if re.search(rf'({build_pattern(game_blocks)})', message): return 'blocks'
     if re.search(rf'({build_pattern(game_redgreen)})', message): return 'redgreen'
     return None
 
+#@laufzeit_messen
 def get_game_values(current_game, message):
     global current_no, current_instruction, current_stage, current_state
     pattern = regex_odd_even if current_game in game_discs + game_blocks else regex_red_green
@@ -133,7 +163,7 @@ def get_game_values(current_game, message):
         current_instruction = normalize_instruction(current_instruction)
     return current_no, current_instruction, current_stage, current_state
 
-
+#@laufzeit_messen
 def normalize_instruction(text):
     # Reihenfolge beachten: zuerst green prüfen, da sie mehrere Synonyme hat
     for word in game_green:
@@ -151,6 +181,7 @@ def normalize_instruction(text):
 
     return None  # wenn nichts gefunden wurde
 
+#@laufzeit_messen
 def process_message(message):
     global current_minute, current_game, current_no, current_instruction, current_stage, current_state, last_no
     message = message.lower()
@@ -188,17 +219,17 @@ if __name__ == "__main__":
 
             if processed:
                 last_processed_time = datetime.now()
-            else:
-                if last_processed_time:
-                    elapsed = (datetime.now() - last_processed_time).total_seconds()
-                    if elapsed > 240:
-                        print(f"Achtung: Seit über 4 Minuten ({int(elapsed)}s) keine Verarbeitung erfolgt.")
-                        with open("game_log.txt", "a", encoding="utf-8") as logfile:
-                            logfile.write(f"{datetime.now().isoformat()} | Achtung: Seit über 4 Minuten ({int(elapsed)}s) keine Verarbeitung erfolgt.\n")
-                else:
-                    print("Noch keine Verarbeitung erfolgt.")
-                    with open("game_log.txt", "a", encoding="utf-8") as logfile:
-                        logfile.write(f"{datetime.now().isoformat()} | Noch keine Verarbeitung erfolgt.\n")
+            # else:
+            #     if last_processed_time:
+            #         elapsed = (datetime.now() - last_processed_time).total_seconds()
+            #         if elapsed > 240:
+            #             print(f"Achtung: Seit über 4 Minuten ({int(elapsed)}s) keine Verarbeitung erfolgt.")
+            #             with open("game_log.txt", "a", encoding="utf-8") as logfile:
+            #                 logfile.write(f"{datetime.now().isoformat()} | Achtung: Seit über 4 Minuten ({int(elapsed)}s) keine Verarbeitung erfolgt.\n")
+            #     else:
+            #         print("Noch keine Verarbeitung erfolgt.")
+            #         with open("game_log.txt", "a", encoding="utf-8") as logfile:
+            #             logfile.write(f"{datetime.now().isoformat()} | Noch keine Verarbeitung erfolgt.\n")
         else:
-            current_game = current_state = current_no = current_stage = current_instruction = current_minute = last_no = None
+            current_game = current_state = current_no = current_stage = current_instruction = current_minute = last_no = last_stage = None
             last_processed_time = None

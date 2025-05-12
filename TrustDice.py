@@ -51,7 +51,7 @@ min_5 = ['5min', '5 min', '5minutes', '5 minutes']
 
 game_discs = ['disc', 'discs']
 game_blocks = ['block', 'blocks']
-game_redgreen = ['red green', 'red_green', 'redgreen']
+game_redgreen = ['red green', 'red_green', 'redgreen', 'red - green', 'red-green']
 
 game_red = ['red']
 game_green = ['green', 'gn', 'grn', 'gm', 'gr']

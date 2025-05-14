@@ -51,15 +51,17 @@ min_5 = ['5min', '5 min', '5minutes', '5 minutes']
 
 game_discs = ['disc', 'discs']
 game_blocks = ['block', 'blocks']
-game_redgreen = ['red green', 'red_green', 'redgreen', 'red - green', 'red-green']
+game_redgreen = ['red green', 'red_green', 'redgreen', 'red - green', 'red-green', 'red/green', 'red / green']
 
 game_red = ['red']
 game_green = ['green', 'gn', 'grn', 'gm', 'gr']
 game_state_odd = ['odd', '0dd']
 game_state_even = ['even', 'evn']
+game_state_big = ['big', 'b', 'bigg']
+game_state_small = ['small', 's', 'sm', 'sml', 'smll', 'smal', 'snl']
 
-losing_states = ['lose', 'loss', 'los', 'lost']
-winning_states = ['win', 'winn', 'winner', 'won', 'wn']
+losing_states = ['lose', 'loss', 'los', 'lost', 'l']
+winning_states = ['win', 'winn', 'winner', 'won', 'wn', 'w', 'bigwin', 'big win']
 
 current_game = None
 current_state = None
@@ -74,6 +76,7 @@ def build_pattern(words):
 
 state_pattern_odd_even = build_pattern(game_state_odd + game_state_even)
 state_pattern_red_green = build_pattern(game_red + game_green)
+state_pattern_big_small = build_pattern(game_state_big + game_state_small)
 result_pattern = build_pattern(losing_states + winning_states)
 
 min_1_pattern = build_pattern(min_1)
@@ -85,6 +88,11 @@ compiled_regex = re.compile(combined_pattern, re.IGNORECASE)
 
 regex_odd_even = re.compile(
     rf'\b(\d{{2,3}})\s+({state_pattern_odd_even})\s+(?:stage\s*)?(\d+)(?:\s+({result_pattern}))?\b',
+    re.IGNORECASE
+)
+
+regex_big_small = re.compile(
+    rf'\b(\d{{2,3}})\s+({state_pattern_big_small})\s+(?:stage\s*)?(\d+)(?:\s+({result_pattern}))?\b',
     re.IGNORECASE
 )
 
@@ -147,9 +155,9 @@ def extract_minutes(text):
 
 #@laufzeit_messen
 def detect_current_game(message):
+    if re.search(rf'({build_pattern(game_redgreen)})', message): return 'redgreen'
     if re.search(rf'({build_pattern(game_discs)})', message): return 'discs'
     if re.search(rf'({build_pattern(game_blocks)})', message): return 'blocks'
-    if re.search(rf'({build_pattern(game_redgreen)})', message): return 'redgreen'
     return None
 
 #@laufzeit_messen
@@ -161,6 +169,14 @@ def get_game_values(current_game, message):
         last_match = matches[-1]
         current_no, current_instruction, current_stage, current_state = last_match
         current_instruction = normalize_instruction(current_instruction)
+    else:
+        if current_game in game_blocks:
+            pattern = regex_big_small
+            matches = re.findall(pattern, message)
+            if matches:
+                last_match = matches[-1]
+                current_no, current_instruction, current_stage, current_state = last_match
+                current_instruction = normalize_instruction(current_instruction)
     return current_no, current_instruction, current_stage, current_state
 
 #@laufzeit_messen
@@ -178,6 +194,12 @@ def normalize_instruction(text):
     for word in game_state_even:
         if word in text:
             return 'even'
+    for word in game_state_big:
+        if word in text:
+            return 'big'
+    for word in game_state_small:
+        if word in text:
+            return 'small'
 
     return None  # wenn nichts gefunden wurde
 
@@ -194,6 +216,9 @@ def process_message(message):
         if values and last_no != current_no:
             if current_state == '':
                 last_no = current_no
+                #check instruction and stage? for duplicates; ignore last successfull message < current_minute?
+                #duration between messages < current_minute?
+                #auf 180 sekunden prüfen?
                 print(f"Spiel: {current_game}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}, Minute: {current_minute}")
                 with open("game_log.txt", "a", encoding="utf-8") as logfile:
                     logfile.write(f"{datetime.now().isoformat()} | Spiel: {current_game}, Minute: {current_minute}, No: {current_no}, Instruction: {current_instruction}, Stage: {current_stage}, State: {current_state}\n")

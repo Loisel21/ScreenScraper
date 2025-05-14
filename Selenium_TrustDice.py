@@ -109,6 +109,8 @@ def get_game_elements(game, minute, instruction):
                 match instruction:
                     case "odd": instruction_button = ".betDiv:nth-child(3)"
                     case "even": instruction_button = ".betDiv:nth-child(4)"
+                    case "big": instruction_button = ".betDiv:nth-child(1)"
+                    case "small": instruction_button = ".betDiv:nth-child(2)"
             
     if game == "discs":
         match minute:
